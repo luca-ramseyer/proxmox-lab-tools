@@ -101,9 +101,13 @@ try {
 }
 if (Test-Path $bgCache) {
     try {
-        $bg = [System.Drawing.Image]::FromFile($bgCache)
+        # load via bytes so GDI+ does NOT keep a file lock (FromFile would),
+        # otherwise a later Save can throw "generic error in GDI+".
+        $bytes = [System.IO.File]::ReadAllBytes($bgCache)
+        $ms = New-Object System.IO.MemoryStream (,$bytes)
+        $bg = [System.Drawing.Image]::FromStream($ms)
         $g.DrawImage($bg, 0, 0, $w, $h)   # stretch to screen; source is 16:9
-        $bg.Dispose()
+        $bg.Dispose(); $ms.Dispose()
     } catch { }   # corrupt cache: keep the solid ink fill
 }
 
@@ -130,10 +134,18 @@ foreach ($row in $rows) {
 }
 
 # ── save and apply ───────────────────────────────────────────────────────
-$out = "$env:ProgramData\raml\wallpaper.png"
-New-Item -ItemType Directory -Force -Path (Split-Path $out) | Out-Null
+# Windows locks the file that is the current wallpaper, so a fixed name would
+# fail to overwrite on refresh. Write a fresh file each run, then clean old.
+$dir = "$env:ProgramData\raml"
+New-Item -ItemType Directory -Force -Path $dir | Out-Null
+$out = Join-Path $dir ("wallpaper-{0}.png" -f (Get-Date -Format 'yyyyMMddHHmmss'))
 $bmp.Save($out, [System.Drawing.Imaging.ImageFormat]::Png)
 $g.Dispose(); $bmp.Dispose()
+
+# drop older generated wallpapers (keep the one we just made)
+Get-ChildItem $dir -Filter 'wallpaper-*.png' -ErrorAction SilentlyContinue |
+    Where-Object { $_.FullName -ne $out } |
+    Remove-Item -Force -ErrorAction SilentlyContinue
 
 $sig = @'
 using System.Runtime.InteropServices;
