@@ -67,6 +67,7 @@ GAP="   "
 LOGO_WIDTH=54
 BLANK=$(printf '%*s' "$LOGO_WIDTH" '')
 
+clear 2>/dev/null || printf '\033[H\033[2J\033[3J'   # wipe login noise (incl. scrollback)
 echo
 total=$(( ${#logo_lines[@]} > ${#info[@]} ? ${#logo_lines[@]} : ${#info[@]} ))
 for ((i=0; i<total; i++)); do
