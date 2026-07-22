@@ -63,7 +63,7 @@ if ($route) {
     $ip = if ($ipObj) { "$($ipObj.IPAddress)/$($ipObj.PrefixLength)" } else { 'unconfigured' }
     $ifName = (Get-NetAdapter -ifIndex $i -ErrorAction SilentlyContinue).Name
     $mac = (Get-NetAdapter -ifIndex $i -ErrorAction SilentlyContinue).MacAddress
-    $dns = ((Get-DnsClientServerAddress -ifIndex $i -AddressFamily IPv4 -ErrorAction SilentlyContinue).ServerAddresses -join '  ')
+    $dns = ((Get-DnsClientServerAddress -InterfaceIndex $i -AddressFamily IPv4 -ErrorAction SilentlyContinue).ServerAddresses -join '  ')
 } else {
     $ip='no default route'; $gw='none'; $ifName='none'; $mac='n/a'; $dns='none'
 }

@@ -43,7 +43,7 @@ function Show-RamlBanner {
         $ip      = if ($ipObj) { "$($ipObj.IPAddress)/$($ipObj.PrefixLength)" } else { 'unconfigured' }
         $ifName  = (Get-NetAdapter -ifIndex $ifIndex -ErrorAction SilentlyContinue).Name
         $mac     = (Get-NetAdapter -ifIndex $ifIndex -ErrorAction SilentlyContinue).MacAddress
-        $dns     = (Get-DnsClientServerAddress -ifIndex $ifIndex -AddressFamily IPv4 -ErrorAction SilentlyContinue).ServerAddresses -join ' '
+        $dns     = (Get-DnsClientServerAddress -InterfaceIndex $ifIndex -AddressFamily IPv4 -ErrorAction SilentlyContinue).ServerAddresses -join ' '
     } else {
         $ip = 'no default route'; $gw = 'none'; $ifName = 'none'; $mac = 'n/a'; $dns = 'none'
     }
