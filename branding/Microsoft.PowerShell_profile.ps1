@@ -68,13 +68,47 @@ function Show-RamlBanner {
         "${INK}mac     $R$DIM$mac$R"
     )
 
-    $gap = '   '; $blank = ' ' * 54
-    $total = [Math]::Max($logo.Count, $info.Count)
+    # visible length = string minus ANSI escape sequences
+    $esc = [regex]'\x1b\[[0-9;]*m'
+    function VLen($s) { ($esc.Replace($s, '')).Length }
+
+    $logoW = 54           # visible width of the logo block
+    $cols  = try { $Host.UI.RawUI.WindowSize.Width } catch { 80 }
+    if (-not $cols -or $cols -lt 1) { $cols = 80 }
+
+    # widest info line → right-align the whole block against the terminal edge
+    $blockW = 0
+    foreach ($ln in $info) { $v = VLen $ln; if ($v -gt $blockW) { $blockW = $v } }
+
+    $nLogo = $logo.Count; $nInfo = $info.Count
+    $total = [Math]::Max($nLogo, $nInfo)
+
+    # if logo + a small gap + info won't fit, stack info UNDER the logo
+    $sideBySide = ($cols -ge ($logoW + 3 + $blockW))
+
     Write-Host ''
-    for ($i = 0; $i -lt $total; $i++) {
-        $left = if ($i -lt $logo.Count) { "$RED$($logo[$i])$R" } else { $blank }
-        $right = if ($i -lt $info.Count) { $info[$i] } else { '' }
-        Write-Host ($left + $gap + $right)
+    if ($sideBySide) {
+        $blockCol = $cols - $blockW           # x where info starts (right inset)
+        $logoOff  = [Math]::Floor(($total - $nLogo) / 2)   # center logo vs info
+        $infoOff  = [Math]::Floor(($total - $nInfo) / 2)
+        for ($i = 0; $i -lt $total; $i++) {
+            $line = ''
+            $leftW = 0
+            $li = $i - $logoOff
+            if ($li -ge 0 -and $li -lt $nLogo) { $line = "$RED$($logo[$li])$R"; $leftW = $logoW }
+            $ii = $i - $infoOff
+            if ($ii -ge 0 -and $ii -lt $nInfo) {
+                $pad = $blockCol - $leftW
+                if ($pad -lt 1) { $pad = 1 }
+                $line += (' ' * $pad) + $info[$ii]
+            }
+            Write-Host $line
+        }
+    } else {
+        # narrow terminal: logo first, then the info block below it
+        foreach ($ln in $logo) { Write-Host "$RED$ln$R" }
+        Write-Host ''
+        foreach ($ln in $info) { Write-Host $ln }
     }
     Write-Host ''
 }
