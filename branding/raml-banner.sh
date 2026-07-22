@@ -99,11 +99,7 @@ total=$(( n_logo > n_info ? n_logo : n_info ))
 logo_off=$(( (total - n_logo) / 2 ))            # push shorter side down to center it
 info_off=$(( (total - n_info) / 2 ))
 
-# center the whole block vertically on screen
-top=$(( (ROWS - total) / 2 ))
-(( top < 1 )) && top=1
-for ((i=0; i<top; i++)); do printf "\n"; done
-
+printf "\n"
 for ((i=0; i<total; i++)); do
     li=$(( i - logo_off )); ii=$(( i - info_off ))
     drew_logo=0
