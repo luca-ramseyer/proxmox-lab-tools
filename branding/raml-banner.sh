@@ -62,22 +62,36 @@ info+=("${INK}gateway ${RESET}${CREAM}${GATEWAY_F:-none}${RESET}")
 info+=("${INK}dns     ${RESET}${CREAM}${DNS_F}${RESET}")
 info+=("${INK}mac     ${RESET}${DIM}${MAC_F:-n/a}${RESET}")
 
-# ── print side by side, top-aligned, overflow below the logo ─────────────
+# ── print: logo left, info flush against the right terminal edge ─────────
 mapfile -t logo_lines <<< "$LOGO"
-GAP="   "
 LOGO_WIDTH=54
-BLANK=$(printf '%*s' "$LOGO_WIDTH" '')
+MIN_GAP=3     # minimum space between logo and info when terminal is narrow
+
+# terminal width, with fallbacks for when COLUMNS/tput are unavailable
+COLS=${COLUMNS:-0}
+[ "$COLS" -gt 0 ] 2>/dev/null || COLS=$(tput cols 2>/dev/null || echo 80)
+
+# visible width of a string = length after stripping ANSI escape sequences
+vlen() { local s=${1//$'\033'\[*([0-9;])m/}; printf '%s' "${#s}"; }
 
 command clear 2>/dev/null || printf '\033[H\033[2J\033[3J'   # wipe login noise + scrollback
 echo
+shopt -s extglob   # needed for the *([0-9;]) pattern in vlen
+
+# widest info line → the whole block is left-aligned to this column, then
+# that column is pushed to the right edge. Keeps labels in one clean column.
+block_w=0
+for line in "${info[@]}"; do w=$(vlen "$line"); (( w > block_w )) && block_w=$w; done
+block_col=$(( COLS - block_w ))                 # x where the block starts
+(( block_col < LOGO_WIDTH + MIN_GAP )) && block_col=$(( LOGO_WIDTH + MIN_GAP ))
+
 total=$(( ${#logo_lines[@]} > ${#info[@]} ? ${#logo_lines[@]} : ${#info[@]} ))
 for ((i=0; i<total; i++)); do
-    if (( i < ${#logo_lines[@]} )); then
-        printf "${RED}%s${RESET}%s" "${logo_lines[i]}" "$GAP"
-    else
-        printf "%s%s" "$BLANK" "$GAP"
+    (( i < ${#logo_lines[@]} )) && printf "${RED}%s${RESET}" "${logo_lines[i]}"
+    if (( i < ${#info[@]} )); then
+        left_w=$(( i < ${#logo_lines[@]} ? LOGO_WIDTH : 0 ))
+        printf '%*s%b' "$(( block_col - left_w ))" '' "${info[i]}"
     fi
-    (( i < ${#info[@]} )) && printf "%b" "${info[i]}"
     printf "\n"
 done
 echo
