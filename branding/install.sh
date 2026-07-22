@@ -54,6 +54,14 @@ if [ "$IS_ROOT" -eq 1 ]; then
   fetch "$RAW/raml-banner.sh" /etc/profile.d/00-raml-banner.sh
   chmod 0644 /etc/profile.d/00-raml-banner.sh
   echo "  ✓ terminal banner -> /etc/profile.d/00-raml-banner.sh"
+  # profile.d only fires for LOGIN shells; GNOME Terminal opens non-login
+  # interactive shells, so also source it from the user's ~/.bashrc.
+  if [ "$TARGET_USER" != root ] && [ -n "$TARGET_HOME" ]; then
+    line='[ -r /etc/profile.d/00-raml-banner.sh ] && . /etc/profile.d/00-raml-banner.sh'
+    grep -qF '00-raml-banner.sh' "$TARGET_HOME/.bashrc" 2>/dev/null || \
+      as_user bash -c "printf '%s\n' '$line' >> '$TARGET_HOME/.bashrc'"
+    echo "  ✓ banner also sourced from ~/.bashrc (non-login shells)"
+  fi
 else
   # ponytail: no-sudo fallback. Sources from ~/.bashrc instead.
   mkdir -p "$TARGET_HOME/.local/share/raml"
