@@ -27,7 +27,8 @@ read -r -d '' LOGO << 'LOGO_EOF'
 ╚═╝  ╚═╝╚═╝  ╚═╝╚═╝     ╚═╝╚══════╝╚═╝ ╚═════╝╚═╝  ╚═╝
 LOGO_EOF
 
-# ── live facts ───────────────────────────────────────────────────────────
+_raml_banner() {
+# ── live facts (re-read every call, so `clear` shows current state) ───────
 HOSTNAME_F=$(hostname)
 FQDN_F=$(hostname -f 2>/dev/null || echo "$HOSTNAME_F")
 OS_F=$(. /etc/os-release 2>/dev/null; echo "${PRETTY_NAME:-$(uname -s)}")
@@ -67,7 +68,7 @@ GAP="   "
 LOGO_WIDTH=54
 BLANK=$(printf '%*s' "$LOGO_WIDTH" '')
 
-clear 2>/dev/null || printf '\033[H\033[2J\033[3J'   # wipe login noise (incl. scrollback)
+command clear 2>/dev/null || printf '\033[H\033[2J\033[3J'   # wipe login noise + scrollback
 echo
 total=$(( ${#logo_lines[@]} > ${#info[@]} ? ${#logo_lines[@]} : ${#info[@]} ))
 for ((i=0; i<total; i++)); do
@@ -80,3 +81,10 @@ for ((i=0; i<total; i++)); do
     printf "\n"
 done
 echo
+}
+
+# override `clear` so it redraws the banner instead of a blank screen
+clear() { command clear 2>/dev/null || printf '\033[H\033[2J\033[3J'; _raml_banner; }
+
+# draw once on login
+_raml_banner
