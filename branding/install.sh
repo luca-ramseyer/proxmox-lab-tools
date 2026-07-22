@@ -39,6 +39,15 @@ else
   echo "  ✓ terminal banner -> ~/.local/share/raml (sourced from .bashrc)"
 fi
 
+# ── disable Ubuntu MOTD — replaced by raml banner ────────────────────────
+# ponytail: chmod -x, not deleting the scripts. Reversible; apt won't restore
+# them anyway. Needs root; skip silently otherwise.
+if [ "$(id -u)" -eq 0 ] && [ -d /etc/update-motd.d ]; then
+  chmod -x /etc/update-motd.d/* 2>/dev/null || true
+  [ -f /etc/motd ] && : > /etc/motd
+  echo "  ✓ Ubuntu MOTD disabled"
+fi
+
 # ── desktop overlay — Conky ──────────────────────────────────────────────
 if [ "$mode" = desktop ]; then
   command -v conky >/dev/null || echo "  ! conky not installed — 'sudo apt install conky' then re-run"
