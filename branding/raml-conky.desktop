@@ -1,0 +1,9 @@
+[Desktop Entry]
+Type=Application
+Name=raml.ch desktop overlay
+Comment=Live host and network panel on the desktop
+Exec=bash -c "sleep 5 && conky -c $HOME/.config/conky/conky.conf"
+X-GNOME-Autostart-enabled=true
+X-GNOME-Autostart-Delay=5
+Terminal=false
+Categories=Utility;

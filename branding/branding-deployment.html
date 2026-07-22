@@ -1,0 +1,307 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Lab Branding — Desktop Overlay &amp; Terminal Banner</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;0,700;1,400&family=Montserrat:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --cream:#F4EFE4;--paper:#EBE4D6;--ink:#211F1C;
+  --ink-70:rgba(33,31,28,.70);--ink-45:rgba(33,31,28,.45);
+  --ink-15:rgba(33,31,28,.15);--ink-08:rgba(33,31,28,.08);
+  --red:#C0473A;--red-tint:rgba(192,71,58,.07);
+  --display:"Cormorant Garamond",Georgia,serif;
+  --body:"Montserrat",-apple-system,system-ui,sans-serif;
+  --mono:"JetBrains Mono",ui-monospace,Menlo,monospace;
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth;scroll-padding-top:2rem}
+@media (prefers-reduced-motion:reduce){html{scroll-behavior:auto}*{transition:none!important}}
+body{margin:0;background:var(--cream);color:var(--ink);font-family:var(--body);font-size:15.5px;line-height:1.65;-webkit-font-smoothing:antialiased}
+.wrap{max-width:1180px;margin:0 auto;padding:0 2rem;display:grid;grid-template-columns:210px 1fr;gap:4rem;align-items:start}
+
+.masthead{border-bottom:1px solid var(--ink-15);margin-bottom:3.5rem}
+.masthead-inner{max-width:1180px;margin:0 auto;padding:4.5rem 2rem 3rem}
+.eyebrow{font-size:.7rem;letter-spacing:.22em;text-transform:uppercase;font-weight:600;color:var(--red);margin:0 0 1.4rem}
+h1{font-family:var(--display);font-weight:600;font-size:clamp(2.6rem,5.5vw,4.2rem);line-height:1.03;margin:0 0 1.2rem;letter-spacing:-.01em}
+h1 em{font-style:italic;color:var(--red)}
+.standfirst{font-family:var(--display);font-size:clamp(1.1rem,2vw,1.4rem);line-height:1.5;color:var(--ink-70);max-width:42ch;margin:0 0 2.5rem}
+.facts{display:flex;flex-wrap:wrap;gap:2.5rem;padding-top:1.6rem;border-top:1px solid var(--ink-15)}
+.fact dt{font-size:.65rem;letter-spacing:.18em;text-transform:uppercase;color:var(--ink-45);font-weight:600;margin-bottom:.35rem}
+.fact dd{margin:0;font-size:.92rem;font-weight:500}
+
+nav{position:sticky;top:2rem;font-size:.8rem}
+nav .nav-label{font-size:.62rem;letter-spacing:.2em;text-transform:uppercase;color:var(--ink-45);font-weight:600;margin-bottom:.9rem}
+nav ol{list-style:none;margin:0;padding:0}
+nav a{display:flex;gap:.6rem;text-decoration:none;color:var(--ink-70);padding:.34rem 0;transition:color .15s}
+nav a:hover{color:var(--red)}
+nav a:focus-visible{outline:2px solid var(--red);outline-offset:2px}
+nav .n{font-family:var(--mono);font-size:.72rem;color:var(--ink-45);flex-shrink:0;padding-top:.1rem}
+nav .rule{height:1px;background:var(--ink-15);margin:1rem 0}
+
+main{min-width:0;padding-bottom:6rem}
+section{margin-bottom:4.5rem;scroll-margin-top:2rem}
+h2{font-family:var(--display);font-size:2.3rem;font-weight:600;line-height:1.12;margin:0 0 .5rem}
+h3{font-size:.95rem;font-weight:600;margin:2.4rem 0 .8rem}
+h4{font-size:.7rem;letter-spacing:.16em;text-transform:uppercase;font-weight:600;color:var(--ink-45);margin:0 0 .7rem}
+p{margin:0 0 1.05rem;max-width:70ch}
+ul,ol{max-width:70ch;padding-left:1.1rem;margin:0 0 1.05rem}
+li{margin-bottom:.4rem}
+strong{font-weight:600}
+code{font-family:var(--mono);font-size:.85em;background:var(--ink-08);padding:.1em .35em;border-radius:2px}
+.section-head{border-top:2px solid var(--ink);padding-top:1.1rem;margin-bottom:2rem}
+.section-head .kicker{font-family:var(--mono);font-size:.72rem;color:var(--red);letter-spacing:.1em;margin-bottom:.5rem}
+.section-head p{color:var(--ink-70);margin:0;font-size:1rem}
+
+table{width:100%;border-collapse:collapse;margin:1.4rem 0;font-size:.85rem}
+th{text-align:left;font-size:.62rem;letter-spacing:.15em;text-transform:uppercase;color:var(--ink-45);font-weight:600;padding:0 .9rem .6rem 0;border-bottom:1px solid var(--ink-15)}
+td{padding:.62rem .9rem .62rem 0;border-bottom:1px solid var(--ink-08);vertical-align:top}
+td.mono{font-family:var(--mono);font-size:.78rem}
+tr:last-child td{border-bottom:1px solid var(--ink-15)}
+td.yes{color:var(--red);font-weight:600}
+
+pre{font-family:var(--mono);font-size:.78rem;line-height:1.6;background:var(--paper);border:1px solid var(--ink-15);padding:1.3rem;overflow-x:auto;margin:1.3rem 0;max-width:70ch}
+pre .c{color:var(--ink-45)}
+
+/* a preview of the terminal banner, on the dark ink ground it lives on */
+.term{background:#211F1C;border:1px solid var(--ink-15);border-radius:6px;padding:1.4rem 1.6rem;margin:1.5rem 0;max-width:70ch;overflow-x:auto;font-family:var(--mono);font-size:.72rem;line-height:1.35}
+.term pre{background:none;border:0;padding:0;margin:0;color:#F4EFE4}
+.term .r{color:#C0473A}
+.term .m{color:#ADA89E}
+.term .d{color:#78746C}
+.term .b{font-weight:700}
+
+.warn{background:var(--red-tint);border-left:2px solid var(--red);padding:1.1rem 1.3rem;margin:1.5rem 0;max-width:70ch}
+.warn h4{color:var(--red);margin-bottom:.5rem}
+.warn p{margin:0;font-size:.92rem}
+.aside{border-left:2px solid var(--ink-15);padding:.1rem 0 .1rem 1.3rem;margin:1.3rem 0;max-width:70ch}
+.aside h4{margin-bottom:.45rem}
+.aside p{margin:0;font-size:.9rem;color:var(--ink-70)}
+
+footer{border-top:1px solid var(--ink-15);margin-top:2rem;padding-top:1.5rem;font-size:.75rem;color:var(--ink-45);display:flex;justify-content:space-between;gap:1rem;flex-wrap:wrap}
+
+@media(max-width:900px){
+  .wrap{grid-template-columns:1fr;gap:0;padding:0 1.4rem}
+  nav{position:static;margin-bottom:3rem;padding-bottom:1.5rem;border-bottom:1px solid var(--ink-15)}
+  nav ol{columns:2;column-gap:1.5rem}
+  .masthead-inner{padding:3rem 1.4rem 2.2rem}
+  table{font-size:.78rem}
+}
+@media print{nav{display:none}.wrap{grid-template-columns:1fr}body{background:#fff;font-size:10.5pt}}
+</style>
+</head>
+<body>
+
+<header class="masthead">
+  <div class="masthead-inner">
+    <p class="eyebrow">Companion sheet · lab branding</p>
+    <h1>Every machine<br><em>says who it is</em></h1>
+    <p class="standfirst">A live host-and-network panel on each desktop, and the same facts under a raml.ch banner on every shell login. Read at display time, so they never lie — even right after he has changed an address.</p>
+    <dl class="facts">
+      <div class="fact"><dt>Desktop overlay</dt><dd>BGInfo · Conky</dd></div>
+      <div class="fact"><dt>Terminal</dt><dd>bash · PowerShell</dd></div>
+      <div class="fact"><dt>Baked into</dt><dd>the templates</dd></div>
+    </dl>
+  </div>
+</header>
+
+<div class="wrap">
+
+<nav aria-label="Contents">
+  <div class="nav-label">Contents</div>
+  <ol>
+    <li><a href="#what"><span class="n">01</span> What goes where</a></li>
+    <li><a href="#preview"><span class="n">02</span> The banner</a></li>
+  </ol>
+  <div class="rule"></div>
+  <div class="nav-label">Linux</div>
+  <ol>
+    <li><a href="#lin-term"><span class="n">03</span> Terminal banner</a></li>
+    <li><a href="#lin-desk"><span class="n">04</span> Desktop overlay</a></li>
+  </ol>
+  <div class="rule"></div>
+  <div class="nav-label">Windows</div>
+  <ol>
+    <li><a href="#win-term"><span class="n">05</span> Terminal banner</a></li>
+    <li><a href="#win-desk"><span class="n">06</span> Desktop overlay</a></li>
+  </ol>
+  <div class="rule"></div>
+  <ol>
+    <li><a href="#bake"><span class="n">§</span> Bake into templates</a></li>
+  </ol>
+</nav>
+
+<main>
+
+<!-- WHAT GOES WHERE -->
+<section id="what">
+  <div class="section-head">
+    <div class="kicker">01</div>
+    <h2>What goes where</h2>
+    <p>The overlay needs a desktop; the banner needs only a shell. So the headless servers get the banner alone — which is where it earns its keep, since they are SSH-only.</p>
+  </div>
+
+  <table>
+    <thead><tr><th>VM</th><th>Desktop overlay</th><th>Terminal banner</th><th>Tooling</th></tr></thead>
+    <tbody>
+      <tr><td class="mono">lan-desktop</td><td class="yes">yes</td><td class="yes">yes</td><td>Conky + bash</td></tr>
+      <tr><td class="mono">lan-win11</td><td class="yes">yes</td><td class="yes">yes</td><td>Wallpaper script + PowerShell</td></tr>
+      <tr><td class="mono">kali-int / kali-ext</td><td class="yes">yes</td><td class="yes">yes</td><td>Conky + bash</td></tr>
+      <tr><td class="mono">srv-dc01</td><td>—</td><td class="yes">yes</td><td>PowerShell</td></tr>
+      <tr><td class="mono">lan-util, dmz-web, srv-files, srv-app</td><td>—</td><td class="yes">yes</td><td>bash</td></tr>
+      <tr><td class="mono">fw-opnsense</td><td>—</td><td>—</td><td>native dashboard covers this</td></tr>
+    </tbody>
+  </table>
+
+  <p>The address field is drawn in Swiss red in both the overlay and the banner — it is the one value that changes most and the one he most needs to see. Everything else is cream on ink.</p>
+</section>
+
+<!-- PREVIEW -->
+<section id="preview">
+  <div class="section-head">
+    <div class="kicker">02</div>
+    <h2>The banner</h2>
+    <p>Brand block on the left, live facts on the right. This is roughly what lands on every login.</p>
+  </div>
+
+  <div class="term"><pre><span class="r b">██████╗  █████╗ ███╗   ███╗██╗         ██████╗██╗  ██╗</span>   <span class="r b">◆</span>  <span class="b">srv-files.corp.thelab.internal</span>
+<span class="r b">██╔══██╗██╔══██╗████╗ ████║██║        ██╔════╝██║  ██║</span>
+<span class="r b">██████╔╝███████║██╔████╔██║██║        ██║     ███████║</span>   <span class="m">host    </span>srv-files
+<span class="r b">██╔══██╗██╔══██║██║╚██╔╝██║██║        ██║     ██╔══██║</span>   <span class="m">os      </span>Ubuntu 24.04.4 LTS
+<span class="r b">██║  ██║██║  ██║██║ ╚═╝ ██║███████╗██╗╚██████╗██║  ██║</span>   <span class="m">kernel  </span>6.8.0-40-generic
+<span class="r b">╚═╝  ╚═╝╚═╝  ╚═╝╚═╝     ╚═╝╚══════╝╚═╝ ╚═════╝╚═╝  ╚═╝</span>   <span class="m">uptime  </span>3 hours, 12 minutes
+
+                                                         <span class="m">iface   </span>ens18
+                                                         <span class="m">addr    </span><span class="r b">10.10.30.20/24</span>
+                                                         <span class="m">gateway </span>10.10.30.1
+                                                         <span class="m">dns     </span>10.10.30.10
+                                                         <span class="m">mac     </span><span class="d">bc:24:11:a1:b2:c3</span></pre></div>
+
+  <p>The ASCII is a fixed 54-column block, so the info column always lines up regardless of the values. When the info runs longer than the six logo rows, it continues below with the left column blanked — visible above.</p>
+</section>
+
+<!-- LINUX TERMINAL -->
+<section id="lin-term">
+  <div class="section-head">
+    <div class="kicker">03</div>
+    <h2>Linux · terminal banner</h2>
+    <p><code>raml-banner.sh</code> → <code>/etc/profile.d/</code>. Runs for every interactive login shell, every user.</p>
+  </div>
+
+<pre>sudo cp raml-banner.sh /etc/profile.d/00-raml-banner.sh
+sudo chmod +x /etc/profile.d/00-raml-banner.sh</pre>
+
+  <p>It guards on an interactive TTY, so it stays silent during <code>scp</code>, cron jobs and non-interactive SSH commands — where a banner would corrupt output. Facts come from <code>ip route</code>, <code>ip addr</code> and <code>/etc/resolv.conf</code> at run time, so a login immediately after a netplan change shows the new address, which is exactly the feedback you want him to notice.</p>
+
+  <div class="aside">
+    <h4>Truecolor</h4>
+    <p>The colours use 24-bit escapes. Any modern terminal and the Guacamole SSH client render them fine. Over a serial console they degrade to plain text rather than breaking — the layout still holds.</p>
+  </div>
+</section>
+
+<!-- LINUX DESKTOP -->
+<section id="lin-desk">
+  <div class="section-head">
+    <div class="kicker">04</div>
+    <h2>Linux · desktop overlay</h2>
+    <p>Conky, drawn onto the desktop top-right, updating every two seconds.</p>
+  </div>
+
+<pre>sudo apt install -y conky-all
+mkdir -p ~/.config/conky ~/.config/autostart
+cp conky-raml.conf   ~/.config/conky/conky.conf
+cp raml-conky.desktop ~/.config/autostart/</pre>
+
+  <div class="warn">
+    <h4>X11 only — this bites on Ubuntu Desktop</h4>
+    <p>Ubuntu defaults to a Wayland session, where Conky's override window will not paint. At the login screen, click the gear and choose <strong>Ubuntu on Xorg</strong>. Kali's Xfce is X11 already and needs nothing. If you would rather keep Wayland, the overlay has to be a GNOME extension instead — more moving parts than it is worth for a lab.</p>
+  </div>
+
+  <p>Because Conky polls live, there is nothing to refresh on a network change — the panel follows the machine's state on its own.</p>
+</section>
+
+<!-- WINDOWS TERMINAL -->
+<section id="win-term">
+  <div class="section-head">
+    <div class="kicker">05</div>
+    <h2>Windows · terminal banner</h2>
+    <p>A PowerShell profile that prints the same block on each new session.</p>
+  </div>
+
+<pre><span class="c"># all users, all hosts (elevated)</span>
+Copy-Item Microsoft.PowerShell_profile.ps1 $PSHOME\Profile.ps1</pre>
+
+  <p>Escapes are written as <code>[char]27</code> rather than <code>`e</code>, so it renders under both PowerShell 7 and the Windows PowerShell 5.1 that ships on the server. Facts come from <code>Get-NetRoute</code>, <code>Get-NetIPAddress</code> and <code>Get-DnsClientServerAddress</code>, keyed off whichever interface holds the default route.</p>
+
+  <div class="aside">
+    <h4>Also worth setting the Terminal font</h4>
+    <p>The block glyphs need a font that carries them — Cascadia Mono (default in Windows Terminal) is fine. The legacy <code>conhost</code> console also renders them once the codepage is UTF-8, which modern Windows sets by default.</p>
+  </div>
+</section>
+
+<!-- WINDOWS DESKTOP -->
+<section id="win-desk">
+  <div class="section-head">
+    <div class="kicker">06</div>
+    <h2>Windows · desktop overlay</h2>
+    <p>Two ways. Pick the scripted one for reproducibility; BGInfo if you like its tray refresh.</p>
+  </div>
+
+  <h3>Scripted — <code>Set-RamlWallpaper.ps1</code></h3>
+  <p>Generates a branded background at screen resolution, draws the live info panel top-right, sets it as wallpaper. Self-contained, lives in the template, survives a reset. Install once, elevated:</p>
+<pre>.\Set-RamlWallpaper.ps1 -Install</pre>
+  <p>That copies itself to <code>C:\ProgramData\raml\</code> and registers a scheduled task with two triggers — at logon, and on the NetworkProfile event that fires when an address changes. So when he reconfigures the NIC, the wallpaper repaints within a second or two without him doing anything.</p>
+
+  <h3>Alternative — Sysinternals BGInfo</h3>
+  <p>The classic tool. Download BGInfo, add the fields Host Name, IP Address, Default Gateway, DNS Server, MAC Address, drop the <code>raml.ch</code> text at the top, save a <code>.bgi</code>, and run it from a logon task with <code>bginfo.cfg /timer:0 /silent /nolicprompt</code>. Refreshes on demand from the tray. The reason it is the alternative rather than the default: it is a binary you must place in the image, whereas the script is text you can keep in Git alongside everything else.</p>
+
+  <div class="aside">
+    <h4>Why not composite onto a photo</h4>
+    <p>The script paints a solid ink background with a faint watermark rather than compositing onto a wallpaper image, which sidesteps all the resolution and scaling headaches of overlaying text on an arbitrary picture. For a lab machine, legible beats pretty.</p>
+  </div>
+</section>
+
+<!-- BAKE -->
+<section id="bake">
+  <div class="section-head">
+    <div class="kicker">§</div>
+    <h2>Bake it into the templates</h2>
+    <p>Do this once, before sealing each template. Then every clone and every reset comes up already branded — no per-VM work.</p>
+  </div>
+
+  <p>The ordering matters: these are the last content changes before the generalize-and-seal steps from the operations sheet.</p>
+
+  <table>
+    <thead><tr><th>Template</th><th>Add before sealing</th></tr></thead>
+    <tbody>
+      <tr><td class="mono">tpl-ubuntu-server</td><td>banner → <code>/etc/profile.d/</code></td></tr>
+      <tr><td class="mono">tpl-ubuntu-desktop</td><td>banner → <code>/etc/profile.d/</code>; Conky + autostart into <code>/etc/skel/.config/</code> so every user inherits it</td></tr>
+      <tr><td class="mono">tpl-kali</td><td>same as desktop</td></tr>
+      <tr><td class="mono">tpl-win11</td><td>profile → <code>$PSHOME\Profile.ps1</code>; run <code>Set-RamlWallpaper.ps1 -Install</code></td></tr>
+      <tr><td class="mono">tpl-winsrv2025</td><td>profile → <code>$PSHOME\Profile.ps1</code> (banner only; no desktop overlay needed)</td></tr>
+    </tbody>
+  </table>
+
+  <div class="aside">
+    <h4>Put the desktop overlay in /etc/skel</h4>
+    <p>Dropping the Conky config and autostart entry into <code>/etc/skel/.config/</code> before sealing means any user account created later — including his — gets the overlay automatically. Configuring it for one user misses the point the moment a second account appears.</p>
+  </div>
+
+  <div class="warn">
+    <h4>One caveat for the login banner and MOTD</h4>
+    <p>If a template already prints a distro MOTD or its own login art, you will get two banners. On Ubuntu, silence the default set with <code>sudo chmod -x /etc/update-motd.d/*</code> in the template before sealing, so only the raml.ch banner shows.</p>
+  </div>
+</section>
+
+<footer>
+  <span>Lab branding — companion to the systems engineering program</span>
+  <span>raml.ch</span>
+</footer>
+
+</main>
+</div>
+</body>
+</html>

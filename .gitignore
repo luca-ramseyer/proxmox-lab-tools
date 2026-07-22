@@ -6,3 +6,5 @@ config*.xml
 *.pem
 *.p12
 .env
+
+.DS_Store
