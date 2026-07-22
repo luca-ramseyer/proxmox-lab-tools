@@ -54,8 +54,12 @@ function Show-RamlBanner {
     }
     if (-not $dns) { $dns = 'none' }
 
+    # NOTE: keep every element a single interpolated string. Using `+` to
+    # concat (e.g. with [char]0x25C6) makes PowerShell parse the whole @(...)
+    # as one expression, collapsing the array to a single element.
+    $dia = [char]0x25C6
     $info = @(
-        "$RED$B" + [char]0x25C6 + "$R  $CREAM$B$fqdn$R",
+        "$RED$B$dia$R  $CREAM$B$fqdn$R",
         '',
         "${INK}host    $R$CREAM$hostN$R",
         "${INK}os      $R$CREAM$os$R",
@@ -68,41 +72,33 @@ function Show-RamlBanner {
         "${INK}mac     $R$DIM$mac$R"
     )
 
-    # visible length = string minus ANSI escape sequences
-    $esc = [regex]'\x1b\[[0-9;]*m'
-    function VLen($s) { ($esc.Replace($s, '')).Length }
-
     $logoW = 54           # visible width of the logo block
+    $gap   = '   '        # space between logo and the info block
     $cols  = try { $Host.UI.RawUI.WindowSize.Width } catch { 80 }
     if (-not $cols -or $cols -lt 1) { $cols = 80 }
-
-    # widest info line → right-align the whole block against the terminal edge
-    $blockW = 0
-    foreach ($ln in $info) { $v = VLen $ln; if ($v -gt $blockW) { $blockW = $v } }
 
     $nLogo = $logo.Count; $nInfo = $info.Count
     $total = [Math]::Max($nLogo, $nInfo)
 
-    # if logo + a small gap + info won't fit, stack info UNDER the logo
-    $sideBySide = ($cols -ge ($logoW + 3 + $blockW))
+    # side-by-side only if the widest info line still fits; else stack below.
+    $maxInfo = 0
+    foreach ($ln in $info) {
+        $v = ($ln -replace "$([char]27)\[[0-9;]*m", '').Length
+        if ($v -gt $maxInfo) { $maxInfo = $v }
+    }
 
     Write-Host ''
-    if ($sideBySide) {
-        $blockCol = $cols - $blockW           # x where info starts (right inset)
-        $logoOff  = [Math]::Floor(($total - $nLogo) / 2)   # center logo vs info
-        $infoOff  = [Math]::Floor(($total - $nInfo) / 2)
+    if ($cols -ge ($logoW + $gap.Length + $maxInfo)) {
+        # logo left, info block immediately to its right (fixed gap)
+        $blank = ' ' * $logoW
+        $logoOff = [Math]::Floor(($total - $nLogo) / 2)   # center logo vs info
+        $infoOff = [Math]::Floor(($total - $nInfo) / 2)
         for ($i = 0; $i -lt $total; $i++) {
-            $line = ''
-            $leftW = 0
             $li = $i - $logoOff
-            if ($li -ge 0 -and $li -lt $nLogo) { $line = "$RED$($logo[$li])$R"; $leftW = $logoW }
+            $left = if ($li -ge 0 -and $li -lt $nLogo) { "$RED$($logo[$li])$R" } else { $blank }
             $ii = $i - $infoOff
-            if ($ii -ge 0 -and $ii -lt $nInfo) {
-                $pad = $blockCol - $leftW
-                if ($pad -lt 1) { $pad = 1 }
-                $line += (' ' * $pad) + $info[$ii]
-            }
-            Write-Host $line
+            $right = if ($ii -ge 0 -and $ii -lt $nInfo) { $info[$ii] } else { '' }
+            Write-Host ($left + $gap + $right)
         }
     } else {
         # narrow terminal: logo first, then the info block below it
