@@ -66,34 +66,53 @@ info+=("${INK}mac     ${RESET}${DIM}${MAC_F:-n/a}${RESET}")
 mapfile -t logo_lines <<< "$LOGO"
 LOGO_WIDTH=54
 MIN_GAP=3     # minimum space between logo and info when terminal is narrow
+PAD=4         # inset from the left and right terminal edges
+INDENT=$(printf '%*s' "$PAD" '')
 
 # terminal width. COLUMNS is usually unset in a non-interactive profile.d
 # context, so ask the tty itself via stty; fall back to tput, then 80.
-COLS=${COLUMNS:-0}
-[ "$COLS" -gt 0 ] 2>/dev/null || COLS=$(stty size 2>/dev/null </dev/tty | awk '{print $2}')
+COLS=${COLUMNS:-0}; ROWS=${LINES:-0}
+_size=$(stty size 2>/dev/null </dev/tty)         # "rows cols"
+[ "${ROWS:-0}" -gt 0 ] 2>/dev/null || ROWS=${_size% *}
+[ "${COLS:-0}" -gt 0 ] 2>/dev/null || COLS=${_size#* }
 [ "${COLS:-0}" -gt 0 ] 2>/dev/null || COLS=$(tput cols 2>/dev/null)
+[ "${ROWS:-0}" -gt 0 ] 2>/dev/null || ROWS=$(tput lines 2>/dev/null)
 [ "${COLS:-0}" -gt 0 ] 2>/dev/null || COLS=80
+[ "${ROWS:-0}" -gt 0 ] 2>/dev/null || ROWS=24
 
 # visible width of a string = length after stripping ANSI escape sequences
 vlen() { local s=${1//$'\033'\[*([0-9;])m/}; printf '%s' "${#s}"; }
 
 command clear 2>/dev/null || printf '\033[H\033[2J\033[3J'   # wipe login noise + scrollback
-echo
 shopt -s extglob   # needed for the *([0-9;]) pattern in vlen
 
 # widest info line → the whole block is left-aligned to this column, then
 # that column is pushed to the right edge. Keeps labels in one clean column.
 block_w=0
 for line in "${info[@]}"; do w=$(vlen "$line"); (( w > block_w )) && block_w=$w; done
-block_col=$(( COLS - block_w ))                 # x where the block starts
-(( block_col < LOGO_WIDTH + MIN_GAP )) && block_col=$(( LOGO_WIDTH + MIN_GAP ))
+block_col=$(( COLS - PAD - block_w ))           # x where the block starts (right inset)
+(( block_col < PAD + LOGO_WIDTH + MIN_GAP )) && block_col=$(( PAD + LOGO_WIDTH + MIN_GAP ))
 
-total=$(( ${#logo_lines[@]} > ${#info[@]} ? ${#logo_lines[@]} : ${#info[@]} ))
+# vertically center the logo against the (taller) info block
+n_logo=${#logo_lines[@]}; n_info=${#info[@]}
+total=$(( n_logo > n_info ? n_logo : n_info ))
+logo_off=$(( (total - n_logo) / 2 ))            # push shorter side down to center it
+info_off=$(( (total - n_info) / 2 ))
+
+# center the whole block vertically on screen
+top=$(( (ROWS - total) / 2 ))
+(( top < 1 )) && top=1
+for ((i=0; i<top; i++)); do printf "\n"; done
+
 for ((i=0; i<total; i++)); do
-    (( i < ${#logo_lines[@]} )) && printf "${RED}%s${RESET}" "${logo_lines[i]}"
-    if (( i < ${#info[@]} )); then
-        left_w=$(( i < ${#logo_lines[@]} ? LOGO_WIDTH : 0 ))
-        printf '%*s%b' "$(( block_col - left_w ))" '' "${info[i]}"
+    li=$(( i - logo_off )); ii=$(( i - info_off ))
+    drew_logo=0
+    if (( li >= 0 && li < n_logo )); then
+        printf "%s${RED}%s${RESET}" "$INDENT" "${logo_lines[li]}"; drew_logo=1
+    fi
+    if (( ii >= 0 && ii < n_info )); then
+        left_w=$(( drew_logo ? PAD + LOGO_WIDTH : 0 ))
+        printf '%*s%b' "$(( block_col - left_w ))" '' "${info[ii]}"
     fi
     printf "\n"
 done
