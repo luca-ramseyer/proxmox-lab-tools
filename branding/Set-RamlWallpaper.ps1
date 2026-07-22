@@ -121,10 +121,6 @@ $panelW = 340
 $x = $w - $panelW - 60
 $y = 70
 
-$g.DrawString('raml.ch', $fTitle, $bRed, $x, $y); $y += 58
-$g.FillRectangle($bRed, $x, $y, $panelW, 2); $y += 16
-$g.DrawString(([char]0x25C6) + " $fqdn", $fHost, $bCream, $x, $y); $y += 40
-
 foreach ($row in $rows) {
     if ($row[0] -eq '') { $y += 12; continue }
     $g.DrawString($row[0], $fLabel, $bMuted, $x, $y)
@@ -132,8 +128,6 @@ foreach ($row in $rows) {
     $g.DrawString([string]$row[1], $fValue, $valBrush, ($x + 92), $y)
     $y += 26
 }
-
-$g.DrawString((Get-Date -Format 'yyyy-MM-dd HH:mm'), $fLabel, $bMuted, $x, ($y + 10))
 
 # ── save and apply ───────────────────────────────────────────────────────
 $out = "$env:ProgramData\raml\wallpaper.png"
