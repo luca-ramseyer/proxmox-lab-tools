@@ -1,4 +1,4 @@
-# Set-RamlWallpaper.ps1
+﻿# Set-RamlWallpaper.ps1
 # Generates a branded desktop background with live host + network info drawn
 # top-right, then sets it as the wallpaper. Re-run on logon and on network
 # change so the desktop always shows the machine's current state.
@@ -88,15 +88,24 @@ $bmp = New-Object System.Drawing.Bitmap $w, $h
 $g = [System.Drawing.Graphics]::FromImage($bmp)
 $g.SmoothingMode = 'AntiAlias'
 $g.TextRenderingHint = 'ClearTypeGridFit'
-$g.Clear($cInk)
+$g.Clear($cInk)   # fallback fill behind the brand image
 
-# faint centred watermark
-$fWatermark = New-Object System.Drawing.Font 'Cormorant Garamond', 120, ([System.Drawing.FontStyle]::Bold)
-$wmColor = [System.Drawing.Color]::FromArgb(18, 244, 239, 228)  # ~7% cream
-$wmBrush = New-Object System.Drawing.SolidBrush $wmColor
-$sf = New-Object System.Drawing.StringFormat
-$sf.Alignment = 'Center'; $sf.LineAlignment = 'Center'
-$g.DrawString('raml.ch', $fWatermark, $wmBrush, ($w/2), ($h/2), $sf)
+# ── brand background image from the brand repo (cached locally) ───────────
+$bgUrl   = 'https://raw.githubusercontent.com/luca-ramseyer/brand/main/assets/wallpapers/raml-swiss-mac-mono-dark.png'
+$bgCache = "$env:ProgramData\raml\background.png"
+New-Item -ItemType Directory -Force -Path (Split-Path $bgCache) | Out-Null
+try {
+    Invoke-WebRequest $bgUrl -OutFile $bgCache -UseBasicParsing -TimeoutSec 15
+} catch {
+    # offline / unreachable: fall back to the cached copy if we have one
+}
+if (Test-Path $bgCache) {
+    try {
+        $bg = [System.Drawing.Image]::FromFile($bgCache)
+        $g.DrawImage($bg, 0, 0, $w, $h)   # stretch to screen; source is 16:9
+        $bg.Dispose()
+    } catch { }   # corrupt cache: keep the solid ink fill
+}
 
 # ── info panel, top-right ────────────────────────────────────────────────
 $fTitle = New-Object System.Drawing.Font 'Cormorant Garamond', 34, ([System.Drawing.FontStyle]::Bold)

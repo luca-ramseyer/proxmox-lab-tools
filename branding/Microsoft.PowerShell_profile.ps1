@@ -1,4 +1,4 @@
-# raml.ch terminal banner for Windows PowerShell
+﻿# raml.ch terminal banner for Windows PowerShell
 # Brand ASCII on the left, live host + network facts on the right.
 #
 # Install for all users (run elevated):
@@ -8,6 +8,11 @@
 #
 # Works in Windows Terminal and the Windows 11 console (ANSI enabled by
 # default). Uses [char]27 escapes so it also runs under Windows PowerShell 5.1.
+#
+# NOTE: must be saved as UTF-8 *with BOM* or PowerShell 5.1 mangles the block
+# glyphs in the logo (reads the file as Windows-1252).
+
+Clear-Host   # wipe the "Windows PowerShell / Copyright" header before drawing
 
 function Show-RamlBanner {
     $e = [char]27
