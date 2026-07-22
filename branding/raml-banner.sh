@@ -67,9 +67,12 @@ mapfile -t logo_lines <<< "$LOGO"
 LOGO_WIDTH=54
 MIN_GAP=3     # minimum space between logo and info when terminal is narrow
 
-# terminal width, with fallbacks for when COLUMNS/tput are unavailable
+# terminal width. COLUMNS is usually unset in a non-interactive profile.d
+# context, so ask the tty itself via stty; fall back to tput, then 80.
 COLS=${COLUMNS:-0}
-[ "$COLS" -gt 0 ] 2>/dev/null || COLS=$(tput cols 2>/dev/null || echo 80)
+[ "$COLS" -gt 0 ] 2>/dev/null || COLS=$(stty size 2>/dev/null </dev/tty | awk '{print $2}')
+[ "${COLS:-0}" -gt 0 ] 2>/dev/null || COLS=$(tput cols 2>/dev/null)
+[ "${COLS:-0}" -gt 0 ] 2>/dev/null || COLS=80
 
 # visible width of a string = length after stripping ANSI escape sequences
 vlen() { local s=${1//$'\033'\[*([0-9;])m/}; printf '%s' "${#s}"; }
