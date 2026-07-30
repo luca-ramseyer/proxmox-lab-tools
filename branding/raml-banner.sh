@@ -16,10 +16,9 @@ case "${RAML_BANNER_FORCE:-}$-" in 1*|*i*) ;; *) return 2>/dev/null || exit 0 ;;
 # sourced from .zshrc, run it through bash instead of letting zsh parse it.
 if [ -n "${ZSH_VERSION:-}" ]; then
   _RAML_BANNER_SRC="${(%):-%x}"
-  _raml_banner() {
-    RAML_BANNER_FORCE=1 COLUMNS="${COLUMNS:-$(tput cols 2>/dev/null || echo 80)}" \
-      bash "$_RAML_BANNER_SRC"
-  }
+  # Deliberately do NOT pass COLUMNS through: zsh's copy is stale at login and
+  # the bash side reads the real width from the tty itself.
+  _raml_banner() { RAML_BANNER_FORCE=1 bash "$_RAML_BANNER_SRC"; }
   clear() { _raml_banner; }
   _raml_banner
   return 0
@@ -84,14 +83,16 @@ MIN_GAP=3     # minimum space between logo and info when terminal is narrow
 PAD=4         # inset from the left and right terminal edges
 INDENT=$(printf '%*s' "$PAD" '')
 
-# terminal width. COLUMNS is usually unset in a non-interactive profile.d
-# context, so ask the tty itself via stty; fall back to tput, then 80.
-COLS=${COLUMNS:-0}; ROWS=${LINES:-0}
+# terminal width. Ask the tty FIRST: an inherited COLUMNS can be stale (zsh has
+# not seen a SIGWINCH yet at login), and a too-large value right-aligns the info
+# block past the real edge, wrapping every line. stty, then tput, then COLUMNS.
+COLS=0; ROWS=0
 _size=$(stty size 2>/dev/null </dev/tty)         # "rows cols"
-[ "${ROWS:-0}" -gt 0 ] 2>/dev/null || ROWS=${_size% *}
-[ "${COLS:-0}" -gt 0 ] 2>/dev/null || COLS=${_size#* }
+if [ -n "$_size" ]; then ROWS=${_size% *}; COLS=${_size#* }; fi
 [ "${COLS:-0}" -gt 0 ] 2>/dev/null || COLS=$(tput cols 2>/dev/null)
 [ "${ROWS:-0}" -gt 0 ] 2>/dev/null || ROWS=$(tput lines 2>/dev/null)
+[ "${COLS:-0}" -gt 0 ] 2>/dev/null || COLS=${COLUMNS:-0}
+[ "${ROWS:-0}" -gt 0 ] 2>/dev/null || ROWS=${LINES:-0}
 [ "${COLS:-0}" -gt 0 ] 2>/dev/null || COLS=80
 [ "${ROWS:-0}" -gt 0 ] 2>/dev/null || ROWS=24
 

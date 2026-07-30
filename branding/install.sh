@@ -99,7 +99,8 @@ if [ "$mode" = desktop ]; then
 
   # wallpaper (GNOME). Needs the image URL and the user's session dbus.
   if [ -n "$WALL_URL" ]; then
-    wall="$TARGET_HOME/.local/share/raml/wallpaper"
+    # keep a real extension — some Xfce/GNOME loaders sniff on it
+    wall="$TARGET_HOME/.local/share/raml/wallpaper.png"
     if as_user bash -c "curl -fsSL '$WALL_URL' -o '$wall'"; then
       uid="$(id -u "$TARGET_USER")"
       # gsettings/xfconf need DBUS_SESSION_BUS_ADDRESS to reach the live session.
@@ -111,15 +112,29 @@ if [ "$mode" = desktop ]; then
       in_session gsettings set org.gnome.desktop.background picture-uri      "file://$wall" || true
       in_session gsettings set org.gnome.desktop.background picture-uri-dark "file://$wall" || true
       in_session gsettings set org.gnome.desktop.background picture-options  "zoom"         || true
-      # Xfce (Kali default). One property per monitor/workspace; set them all.
+      # Xfce (Kali default). Backdrop props are per monitor+workspace and may not
+      # exist yet on a fresh profile, so update the existing ones AND create the
+      # canonical monitor0/workspace0 pair with --create.
       if command -v xfconf-query >/dev/null; then
-        for prop in $(in_session xfconf-query -c xfce4-desktop -l | grep -E 'last-image$'); do
+        existing=$(in_session xfconf-query -c xfce4-desktop -l | grep -E 'last-image$' || true)
+        for prop in $existing; do
           in_session xfconf-query -c xfce4-desktop -p "$prop" -s "$wall" || true
         done
         # image-style 5 = zoomed/scaled
-        for prop in $(in_session xfconf-query -c xfce4-desktop -l | grep -E 'image-style$'); do
+        for prop in $(in_session xfconf-query -c xfce4-desktop -l | grep -E 'image-style$' || true); do
           in_session xfconf-query -c xfce4-desktop -p "$prop" -s 5 || true
         done
+        if [ -z "$existing" ]; then
+          for mon in monitor0 monitorVirtual-1 monitoreDP-1; do
+            base="/backdrop/screen0/$mon/workspace0"
+            in_session xfconf-query -c xfce4-desktop -p "$base/last-image" \
+              --create -t string -s "$wall" || true
+            in_session xfconf-query -c xfce4-desktop -p "$base/image-style" \
+              --create -t int -s 5 || true
+          done
+        fi
+        # reload the desktop so it picks the new backdrop up without a re-login
+        in_session xfdesktop --reload || true
       fi
       echo "  ✓ wallpaper set (re-login if it doesn't apply immediately)"
     else
