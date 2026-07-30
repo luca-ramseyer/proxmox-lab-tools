@@ -7,9 +7,23 @@
 # Install (all users):   sudo cp raml-banner.sh /etc/profile.d/00-raml-banner.sh
 # It then runs on every interactive login shell.
 
-# only draw for interactive shells on a real terminal
-case $- in *i*) ;; *) return 2>/dev/null || exit 0 ;; esac
+# only draw for interactive shells on a real terminal. RAML_BANNER_FORCE=1 is
+# set by the zsh path below, which re-runs this file with a non-interactive bash.
+case "${RAML_BANNER_FORCE:-}$-" in 1*|*i*) ;; *) return 2>/dev/null || exit 0 ;; esac
 [ -t 1 ] || { return 2>/dev/null || exit 0; }
+
+# This script is bash (arrays, read -d ''). Kali's default shell is zsh, so when
+# sourced from .zshrc, run it through bash instead of letting zsh parse it.
+if [ -n "${ZSH_VERSION:-}" ]; then
+  _RAML_BANNER_SRC="${(%):-%x}"
+  _raml_banner() {
+    RAML_BANNER_FORCE=1 COLUMNS="${COLUMNS:-$(tput cols 2>/dev/null || echo 80)}" \
+      bash "$_RAML_BANNER_SRC"
+  }
+  clear() { _raml_banner; }
+  _raml_banner
+  return 0
+fi
 
 # ── brand colours (truecolor) ───────────────────────────────────────────
 RED=$'\033[38;2;192;71;58m'      # Swiss Red  #C0473A
@@ -63,7 +77,8 @@ info+=("${INK}dns     ${RESET}${CREAM}${DNS_F}${RESET}")
 info+=("${INK}mac     ${RESET}${DIM}${MAC_F:-n/a}${RESET}")
 
 # ── print: logo left, info flush against the right terminal edge ─────────
-mapfile -t logo_lines <<< "$LOGO"
+# ponytail: read loop instead of mapfile — bash 3.2 (macOS) has no mapfile.
+logo_lines=(); while IFS= read -r _l; do logo_lines+=("$_l"); done <<< "$LOGO"
 LOGO_WIDTH=54
 MIN_GAP=3     # minimum space between logo and info when terminal is narrow
 PAD=4         # inset from the left and right terminal edges

@@ -55,20 +55,28 @@ if [ "$IS_ROOT" -eq 1 ]; then
   chmod 0644 /etc/profile.d/00-raml-banner.sh
   echo "  ✓ terminal banner -> /etc/profile.d/00-raml-banner.sh"
   # profile.d only fires for LOGIN shells; GNOME Terminal opens non-login
-  # interactive shells, so also source it from the user's ~/.bashrc.
+  # interactive shells, so also source it from the user's rc file. Kali
+  # defaults to zsh, so hook both rc files that exist.
   if [ "$TARGET_USER" != root ] && [ -n "$TARGET_HOME" ]; then
     line='[ -r /etc/profile.d/00-raml-banner.sh ] && . /etc/profile.d/00-raml-banner.sh'
-    grep -qF '00-raml-banner.sh' "$TARGET_HOME/.bashrc" 2>/dev/null || \
-      as_user bash -c "printf '%s\n' '$line' >> '$TARGET_HOME/.bashrc'"
-    echo "  ✓ banner also sourced from ~/.bashrc (non-login shells)"
+    for rc in .bashrc .zshrc; do
+      [ -f "$TARGET_HOME/$rc" ] || continue
+      grep -qF '00-raml-banner.sh' "$TARGET_HOME/$rc" && continue
+      as_user bash -c "printf '%s\n' '$line' >> '$TARGET_HOME/$rc'"
+      echo "  ✓ banner also sourced from ~/$rc (non-login shells)"
+    done
   fi
 else
-  # ponytail: no-sudo fallback. Sources from ~/.bashrc instead.
+  # ponytail: no-sudo fallback. Sources from the user's rc files instead.
   mkdir -p "$TARGET_HOME/.local/share/raml"
   fetch "$RAW/raml-banner.sh" "$TARGET_HOME/.local/share/raml/raml-banner.sh"
-  grep -q 'raml-banner.sh' "$TARGET_HOME/.bashrc" 2>/dev/null || \
-    echo '. "$HOME/.local/share/raml/raml-banner.sh"' >> "$TARGET_HOME/.bashrc"
-  echo "  ✓ terminal banner -> ~/.local/share/raml (sourced from .bashrc)"
+  for rc in .bashrc .zshrc; do
+    [ -f "$TARGET_HOME/$rc" ] || continue
+    grep -q 'raml-banner.sh' "$TARGET_HOME/$rc" && continue
+    echo '. "$HOME/.local/share/raml/raml-banner.sh"' >> "$TARGET_HOME/$rc"
+    echo "  ✓ terminal banner sourced from ~/$rc"
+  done
+  echo "  ✓ terminal banner -> ~/.local/share/raml"
 fi
 
 # ── disable Ubuntu MOTD — replaced by raml banner ────────────────────────
@@ -94,14 +102,25 @@ if [ "$mode" = desktop ]; then
     wall="$TARGET_HOME/.local/share/raml/wallpaper"
     if as_user bash -c "curl -fsSL '$WALL_URL' -o '$wall'"; then
       uid="$(id -u "$TARGET_USER")"
-      # gsettings needs DBUS_SESSION_BUS_ADDRESS to reach the running GNOME.
-      set_wall() {
+      # gsettings/xfconf need DBUS_SESSION_BUS_ADDRESS to reach the live session.
+      in_session() {
         as_user env DBUS_SESSION_BUS_ADDRESS="unix:path=/run/user/$uid/bus" \
-          gsettings set "$1" "$2" "$3" 2>/dev/null
+          DISPLAY="${DISPLAY:-:0}" "$@" 2>/dev/null
       }
-      set_wall org.gnome.desktop.background picture-uri       "file://$wall" || true
-      set_wall org.gnome.desktop.background picture-uri-dark  "file://$wall" || true
-      set_wall org.gnome.desktop.background picture-options   "zoom"         || true
+      # GNOME
+      in_session gsettings set org.gnome.desktop.background picture-uri      "file://$wall" || true
+      in_session gsettings set org.gnome.desktop.background picture-uri-dark "file://$wall" || true
+      in_session gsettings set org.gnome.desktop.background picture-options  "zoom"         || true
+      # Xfce (Kali default). One property per monitor/workspace; set them all.
+      if command -v xfconf-query >/dev/null; then
+        for prop in $(in_session xfconf-query -c xfce4-desktop -l | grep -E 'last-image$'); do
+          in_session xfconf-query -c xfce4-desktop -p "$prop" -s "$wall" || true
+        done
+        # image-style 5 = zoomed/scaled
+        for prop in $(in_session xfconf-query -c xfce4-desktop -l | grep -E 'image-style$'); do
+          in_session xfconf-query -c xfce4-desktop -p "$prop" -s 5 || true
+        done
+      fi
       echo "  ✓ wallpaper set (re-login if it doesn't apply immediately)"
     else
       echo "  ! wallpaper download failed from \$WALL_URL — skipped"
