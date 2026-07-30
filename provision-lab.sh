@@ -22,17 +22,20 @@ FW_HOSTNAME=fw-01         # same in every pod; the domain disambiguates
 AGENT_TIMEOUT=180         # seconds to wait for the guest agent after boot
 
 # ---------------------------------------------------------------- args
-LAB_NUM=""; LAB_USER=""; LAB_PASS=""; DRY_RUN=0
+LAB_NUM=""; LAB_USER=""; LAB_PASS=""; DRY_RUN=0; POOL_OVERRIDE=""; DOMAIN_OVERRIDE=""
 
 usage() {
   cat <<EOF
 Usage: $0 -n <lab-number 1-9> -u <username> [-p <password>] [--dry-run]
+          [--pool <name>] [--domain <fqdn>]
 
   -n   lab number; drives bridge names, subnets and VMIDs
   -u   short username, e.g. 'busd' -> pool lab-busd, user busd@pve
   -p   password for the new PVE user (prompted if omitted)
        pass -p '' to skip user creation entirely
-  --dry-run   print what would happen, change nothing
+  --pool    override the pool name (default: lab-<user>)
+  --domain  override the firewall domain (default: <user>.${BASE_DOMAIN})
+  --dry-run print what would happen, change nothing
 EOF
   exit 1
 }
@@ -42,6 +45,8 @@ while [[ $# -gt 0 ]]; do
     -n) LAB_NUM="$2"; shift 2 ;;
     -u) LAB_USER="$2"; shift 2 ;;
     -p) LAB_PASS="$2"; shift 2 ;;
+    --pool) POOL_OVERRIDE="$2"; shift 2 ;;
+    --domain) DOMAIN_OVERRIDE="$2"; shift 2 ;;
     --dry-run) DRY_RUN=1; shift ;;
     *) usage ;;
   esac
@@ -51,7 +56,9 @@ done
 [[ "$LAB_NUM" =~ ^[1-9]$ ]] || { echo "lab number must be 1-9"; exit 1; }
 
 # ---------------------------------------------------------------- derived
-POOL="lab-${LAB_USER}"
+# --pool / --domain exist so a pod does not have to inherit the lab-<user> and
+# <user>.<base> shapes; without them 'lab' would become lab-lab / lab.lab.raml.ch.
+POOL="${POOL_OVERRIDE:-lab-${LAB_USER}}"
 BR_LAN="vmbr${LAB_NUM}1"
 BR_DMZ="vmbr${LAB_NUM}2"
 BR_SRV="vmbr${LAB_NUM}3"
@@ -60,7 +67,7 @@ FW_NAME="fw-lab${LAB_NUM}"
 NET_LAN="10.${LAB_NUM}.10.0/24"
 NET_DMZ="10.${LAB_NUM}.20.0/24"
 NET_SRV="10.${LAB_NUM}.30.0/24"
-LAB_DOMAIN="${LAB_USER}.${BASE_DOMAIN}"
+LAB_DOMAIN="${DOMAIN_OVERRIDE:-${LAB_USER}.${BASE_DOMAIN}}"
 
 run() {
   if [[ $DRY_RUN -eq 1 ]]; then

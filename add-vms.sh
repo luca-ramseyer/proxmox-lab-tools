@@ -36,14 +36,16 @@ ROSTER=(
 VMID_OFFSET=10            # first guest gets base+10, then +11, +12 ...
 
 # ---------------------------------------------------------------- args
-LAB_NUM=""; LAB_USER=""; DRY_RUN=0; ONLY=""; START=0
+LAB_NUM=""; LAB_USER=""; DRY_RUN=0; ONLY=""; START=0; POOL_OVERRIDE=""
 
 usage() {
   cat <<EOF
 Usage: $0 -n <lab-number 1-9> -u <username> [--only a,b] [--start] [--dry-run]
+          [--pool <name>]
 
   -n        lab number; must match the pod created by provision-lab.sh
   -u        short username; pool is lab-<user>
+  --pool    override the pool name; must match what provision-lab.sh used
   --only    comma-separated subset of guest names to create
   --start   power the guests on after creating them (default: leave stopped)
   --dry-run print what would happen, change nothing
@@ -58,6 +60,7 @@ while [[ $# -gt 0 ]]; do
   case "$1" in
     -n) LAB_NUM="$2"; shift 2 ;;
     -u) LAB_USER="$2"; shift 2 ;;
+    --pool) POOL_OVERRIDE="$2"; shift 2 ;;
     --only) ONLY="$2"; shift 2 ;;
     --start) START=1; shift ;;
     --dry-run) DRY_RUN=1; shift ;;
@@ -69,8 +72,8 @@ done
 [[ "$LAB_NUM" =~ ^[1-9]$ ]] || { echo "lab number must be 1-9"; exit 1; }
 
 # ---------------------------------------------------------------- derived
-# Mirrors provision-lab.sh exactly; keep the two in sync.
-POOL="lab-${LAB_USER}"
+# Mirrors provision-lab.sh exactly; keep the two in sync, --pool included.
+POOL="${POOL_OVERRIDE:-lab-${LAB_USER}}"
 BR_LAN="vmbr${LAB_NUM}1"
 BR_DMZ="vmbr${LAB_NUM}2"
 BR_SRV="vmbr${LAB_NUM}3"
