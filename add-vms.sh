@@ -12,12 +12,13 @@
 set -euo pipefail
 
 # ---------------------------------------------------------------- config
-# Template VMIDs. Verify these against `qm list` on your host before the
-# first real run — a wrong ID here clones the wrong image.
-TPL_UBUNTU_DESKTOP=9000
-TPL_UBUNTU_SERVER=9001
-TPL_WIN11=9002
-TPL_KALI=9003
+# Template VMIDs, confirmed against `qm list` on the host.
+# Note server/desktop are 9000/9001 respectively — the reverse of what an
+# earlier README draft claimed. Re-check with `qm list` if templates get rebuilt.
+TPL_UBUNTU_SERVER=9000    # tmpl-ub-srv
+TPL_UBUNTU_DESKTOP=9001   # tmpl-ub-de
+TPL_WIN11=9002            # tmpl-win-11
+TPL_KALI=9003             # tmpl-kl-de
 
 STORAGE=local-lvm         # where full clones land
 BRIDGE_WAN=vmbr0          # only used for the note printed at the end

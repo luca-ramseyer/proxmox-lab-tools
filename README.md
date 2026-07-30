@@ -94,7 +94,15 @@ Deliberately excluded: `VM.Config.Network` — without it a student cannot
 re-attach their VM to a different bridge and bypass their firewall. Also no
 `Sys.*`, so there is no path from a lab account to the hypervisor.
 
-**3. Linux guest templates** for lab VMs (e.g. `9000` desktop, `9001` server).
+**3. Guest templates** for lab VMs, as referenced by `add-vms.sh`:
+
+| VMID | Name | Role |
+|---|---|---|
+| `9000` | `tmpl-ub-srv` | Ubuntu server |
+| `9001` | `tmpl-ub-de` | Ubuntu desktop |
+| `9002` | `tmpl-win-11` | Windows 11 desktop |
+| `9003` | `tmpl-kl-de` | Kali desktop |
+| `9100` | `tmpl-fw-opnsense` | OPNsense firewall |
 
 ---
 
