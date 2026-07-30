@@ -17,6 +17,7 @@ Built for teaching — one pod per student, plus one for the instructor.
 | Script | Purpose |
 |---|---|
 | `new-lab.sh` | Provision a complete lab pod: bridges, pool, user, firewall |
+| `add-vms.sh` | Clone the guest VMs into an existing pod and pin them to zone bridges |
 
 More tooling to follow (see [Roadmap](#roadmap)).
 
@@ -153,16 +154,34 @@ failed run is safe to repeat.
 
 ### After provisioning
 
-The firewall is running but nothing else is on the pod's LAN yet. Clone a
-client VM into the pod:
+The firewall is running but nothing else is on the pod's LAN yet. `add-vms.sh`
+clones the standard guest roster in and wires each one to its zone bridge:
 
 ```bash
-qm clone 9000 2001 --name lan-cl-01 --full --pool lab-busd
-qm set 2001 --net0 virtio,bridge=vmbr21
-qm start 2001
+add-vms.sh -n 2 -u busd --dry-run
+add-vms.sh -n 2 -u busd
 ```
 
-Then browse to `https://10.2.10.1` from that client to reach the OPNsense GUI.
+| Guest | Template | Zone | Bridge (lab 2) |
+|---|---|---|---|
+| `ubu-de-01` | Ubuntu desktop | LAN | `vmbr21` |
+| `win11-01` | Windows 11 | LAN | `vmbr21` |
+| `kali-01` | Kali | LAN | `vmbr21` |
+| `ubu-srv-dmz` | Ubuntu server | DMZ | `vmbr22` |
+| `ubu-srv-srv` | Ubuntu server | SRV | `vmbr23` |
+
+VMIDs are assigned from `<lab>010` upwards. Names get a `-lab<n>` suffix, and
+that name is how a re-run knows a guest already exists — so an interrupted run
+is safe to repeat and only the missing guests get created.
+
+Guests are created stopped; pass `--start` to power them on, or `--only a,b` to
+create a subset. Template VMIDs live in a config block at the top of the script
+— **check them against `qm list` before the first real run.**
+
+The SRV guest has no gateway until the student assigns and addresses OPT2 in
+OPNsense. That is the exercise.
+
+Then browse to `https://10.2.10.1` from a LAN client to reach the OPNsense GUI.
 
 ---
 
@@ -184,8 +203,6 @@ Then browse to `https://10.2.10.1` from that client to reach the OPNsense GUI.
 
 - `rm-lab.sh` — tear down a pod: stop and destroy its VMs, drop the pool, user,
   ACLs and bridges
-- `add-vm.sh` — clone a guest template into a pod at the next free VMID and
-  attach it to the right zone bridge
 - `lab-status.sh` — show every pod, its VMs, and their power state
 - Migration to a VLAN-aware bridge, replacing per-pod bridges with per-pod VLAN
   ranges — the same isolation, but the way it is actually done in production
